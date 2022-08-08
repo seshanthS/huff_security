@@ -1,0 +1,55 @@
+#define function paused() view returns (bool)
+#define constant _paused_storage = FREE_STORAGE_POINTER()
+
+#define error PAUSED()
+#define error NOT_PAUSED()
+
+#define macro whenNotPaused() = takes(0) returns(0) {
+    0x01
+    [_paused_storage] sload
+    eq revertTx jumpi       //reverts if paused (i.e _paused_storage == 1)
+    continue jump
+
+    revertTx:
+        __ERROR(PAUSED)
+        0x00 mstore
+        0x04 0x00 revert
+    
+    continue:
+
+}
+
+#define macro whenPaused() = takes(0) returns(0) {
+    0x00
+    [_paused_storage] sload
+    eq revertTx jumpi       //revert when _paused_storage == 0// i.e revert when unpaused
+    continue jump
+
+    revertTx:
+        __ERROR(NOT_PAUSED)
+        0x00 mstore
+        0x04 0x00 revert
+    
+    continue:
+
+}
+
+#define macro paused() = takes(0) returns(1) {
+    [_paused_storage] sload
+    0x00 mstore
+    0x04 0x1f return //returns last 1 byte(since its right aligned) //TODO check
+}
+
+#define macro _pause() = takes(0) returns (0) {
+    0x01 [_paused_storage] sstore
+    //TODO emit event
+}
+
+#define macro _unPause() = takes(0) returns (0) {
+    0x00 [_paused_storage] sstore
+    //TODO emit event
+}
+
+#define macro MAIN() = takes(0) returns(0) {
+    //TODO delete this block
+}
