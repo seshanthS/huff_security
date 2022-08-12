@@ -1,0 +1,37 @@
+/**
+    USAGE:
+        #include "./ReentrancyGuard.huff"
+
+        #define macro MY_FUNC() = takes(0) returns(0) {
+            BEGIN_REENTRANTGUARD()
+
+            ....
+            your function/macro logics
+            ....
+            
+            END_REENTRANTGUARD()
+        }
+**/
+#define constant ENTERED = FREE_STORAGE_POINTER()
+
+#define error REENTRANCY_GUARD()
+
+#define macro BEGIN_REENTRANTGUARD() = takes(0) returns(0) {
+    [ENTERED] sload             //[0x01]
+    0x02 eq revertTx jumpi      //revert if [ENTERED] is 0x02 i.e already entered
+    0x02 [ENTERED] sstore       //0x02 => ENTERED
+
+    revertTx:
+        __ERROR(REENTRANCY_GUARD)
+        0x00 mstore
+
+        0x04 0x00 revert
+}
+
+#define macro END_REENTRANTGUARD() = takes(0) returns(0) {
+    0x01 [ENTERED] sstore        //0x01 => NOT_ENTERED
+}
+
+#define macro CONSTRUCTOR() = takes(0) returns(0) {
+    0x01 [ENTERED] sstore
+}
