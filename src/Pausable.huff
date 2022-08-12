@@ -1,5 +1,9 @@
 #define function paused() view returns (bool)
+
 #define constant _paused_storage = FREE_STORAGE_POINTER()
+
+#define event Paused(address)
+#define event UnPaused(address)
 
 #define error PAUSED()
 #define error NOT_PAUSED()
@@ -34,22 +38,25 @@
 
 }
 
+// Returns true if paused, false otherwise
 #define macro paused() = takes(0) returns(1) {
     [_paused_storage] sload
     0x00 mstore
-    0x04 0x1f return //returns last 1 byte(since its right aligned) //TODO check
+    0x20 0x00 return
 }
 
-#define macro _pause() = takes(0) returns (0) {
-    0x01 [_paused_storage] sstore
-    //TODO emit event
+#define macro _pause() = takes(1) returns (0) {
+    //takes caller address as input   //[caller]
+    0x01 [_paused_storage] sstore     //[caller]
+    0x00 mstore                       //stores the address of the caller of the function
+    [Paused] 0x20 0x00 LOG1           //emits event Paused(address)
+    stop
 }
 
-#define macro _unPause() = takes(0) returns (0) {
+#define macro _unPause() = takes(1) returns (0) {
+    //takes caller address as input   //[caller]
     0x00 [_paused_storage] sstore
-    //TODO emit event
-}
-
-#define macro MAIN() = takes(0) returns(0) {
-    //TODO delete this block
+    0x00 mstore                       //stores the address of the caller of the function
+    [UnPaused] 0x20 0x00 LOG1         //emits event UnPaused(address)
+    stop
 }
